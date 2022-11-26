@@ -13,11 +13,31 @@
     yum:
       name: /opt/jdk-8u60-linux-x64.rpm
       state: present
-  - name: Git Installation
-    yum:
-     name: git
-     state: present
-  - name: Maven Installation
-    yum:
-      name: maven
+  - name: Download the Maven installation/zip file
+    get_url:
+      url: https://dlcdn.apache.org/maven/maven-3/3.8.6/binaries/apache-maven-3.8.6-bin.tar.gz
+      dest: /opt/apache-maven-3.8.6-bin.tar.gz
+        #- name: Maven Installation
+        #yum:
+        #name: maven
+        #state: present
+  - name: Unzip the file 
+    ansible.builtin.unarchive:
+      src: /opt/apache-maven-3.8.6-bin.tar.gz
+      dest: /opt
+  - name: Make the Symbolic like for mvn
+    ansible.builtin.file:
+      src: /opt/apache-maven-3.8.6/bin/mvn
+      dest: /usr/bin/mvn
+      state: link
+  - name: Update the Profile file 
+    lineinfile:
+      path: /etc/profile
       state: present
+      line: "{{ item }}"
+    with_items:
+      - 'export M2_HOME="/opt/apache-maven-3.8.6"'
+      - 'export PATH=$PATH:$M2_HOME/bin' 
+  - name: Source the Profile file
+    shell:
+      cmd: source /etc/profile
